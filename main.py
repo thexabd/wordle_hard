@@ -162,22 +162,10 @@ if __name__ == "__main__":
         "--first_guess", default="raise",
         help="Specify a fixed word for the solver to use in the first guess, default 'raise'")
 
-    subparsers = parser.add_subparsers(help="usages: interactive/analysis", dest='mode')
-
-    # interactive
-    parser_i = subparsers.add_parser("interactive", help="Play Interactively")
-    parser_i.add_argument(
-        "--with_target", action="store_true",
-        help="If specified, set a target word for the solver to guess")
+    # subparsers = parser.add_subparsers(help="usages: interactive/analysis", dest='mode')
 
     # analysis
-    parser_a = subparsers.add_parser("analysis", help="Analyse First Guess Performance")
-
-    parser_a.add_argument(
-        "--topK", default=None,
-        help="Check the performance of the top-K words with the highest internal solver score")
-    parser_a.add_argument(
-        "--save_trace", nargs="+", default=None)
+    # parser_a = subparsers.add_parser("analysis", help="Analyse First Guess Performance")
 
     args = parser.parse_args()
 
@@ -197,13 +185,4 @@ if __name__ == "__main__":
         print("\n[Loading the Max Information Gain Player (large word list)]\n")
         player = MaxInformationGainWordlePlayer(wordle, guess_list=get_words("large"), precompute="large")
 
-    if args.mode == "interactive":
-        interactive_play(wordle, player, with_target=args.with_target, first_guess=args.first_guess)
-
-    elif args.mode == "analysis":
-        if args.topK:
-            check_topK_guesses_performance(wordle, player, topK=int(args.topK))
-        elif args.save_trace:
-            save_trace(wordle, player, first_guess_list=args.save_trace)
-        elif args.first_guess:
-            get_first_guess_performance(wordle, player, first_guess=args.first_guess)
+    get_first_guess_performance(wordle, player, first_guess=args.first_guess)
