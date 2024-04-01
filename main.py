@@ -58,7 +58,7 @@ def get_first_guess_performance(wordle, player, first_guess, verbose=True):
 
     all_guesses = []
     for target in tqdm(wordle.words):
-        num_guess, trace = player.play(target=target, first_guess=first_guess, verbose=False)
+        num_guess, trace = player.play(target=target, first_guess=first_guess, verbose=True)
         all_guesses.append(num_guess)
     msg = _get_stats(all_guesses)
     if verbose:
@@ -79,19 +79,14 @@ if __name__ == "__main__":
         description='Wordle Solvers in Python!')
 
     parser.add_argument(
-        "--solver", choices=["heuristic", "large-mig"], default="heuristic",
-        help="Specify the solver to use (heuristic/large-mig)")
+        "--solver", choices=["heuristic", "mig"], default="mig",
+        help="Specify the solver to use (heuristic/mig)")
     parser.add_argument(
-        "--first_guess", default="audio",
+        "--first_guess", default="salet",
         help="Specify a fixed word for the solver to use in the first guess, default 'audio'")
     parser.add_argument(
-        "--mode", default="easy",
-        help="Specify the difficulty, default 'easy'")
-
-    # subparsers = parser.add_subparsers(help="usages: interactive/analysis", dest='mode')
-
-    # analysis
-    # parser_a = subparsers.add_parser("analysis", help="Analyse First Guess Performance")
+        "--mode", default="hard",
+        help="Specify the difficulty, default 'hard'")
 
     args = parser.parse_args()
 
@@ -99,22 +94,20 @@ if __name__ == "__main__":
     words_size = "large"
     wordle = Wordle(5, get_words(words_size))
 
-    if args.mode == "easy":
-        if args.solver == "heuristic":
-            print("\n[Loading the Heuristic Player ({} word list)]\n".format(words_size))
-            player = HeuristicWordlePlayer(wordle, guess_list=get_words(words_size))
+    if args.solver == "heuristic" and args.mode == "easy":
+        print("\n[Loading the Heuristic Player ({} word list)]\n".format(words_size))
+        player = HeuristicWordlePlayer(wordle, guess_list=get_words(words_size))
 
-        elif args.solver == "large-mig":
-            print("\n[Loading the Max Information Gain Player (large word list)]\n")
-            player = MaxInformationGainWordlePlayer(wordle, guess_list=get_words("large"), precompute="large")
+    elif args.solver == "mig" and args.mode == "easy":
+        print("\n[Loading the Max Information Gain Player (large word list)]\n")
+        player = MaxInformationGainWordlePlayer(wordle, guess_list=get_words("large"), precompute="large")
 
-    elif args.mode == "hard":
-        if args.solver == "heuristic":
-            print("\n[Loading the Heuristic Player ({} word list)]\n".format(words_size))
-            player = HardHeuristicWordlePlayer(wordle, guess_list=get_words(words_size))
+    elif args.solver == "heuristic" and args.mode == "hard":
+        print("\n[Loading the Max Information Gain Player (large word list)]\n")
+        player = HardHeuristicWordlePlayer(wordle, guess_list=get_words(words_size))
 
-        elif args.solver == "large-mig":
-            print("\n[Loading the Max Information Gain Player (large word list)]\n")
-            player = HardMaxInformationGainWordlePlayer(wordle, guess_list=get_words("large"), precompute="large")
+    elif args.solver == "mig" and args.mode == "hard":
+        print("\n[Loading the Max Information Gain Player (large word list)]\n")
+        player = HardMaxInformationGainWordlePlayer(wordle, guess_list=get_words("large"), precompute="large")
 
     get_first_guess_performance(wordle, player, first_guess=args.first_guess)

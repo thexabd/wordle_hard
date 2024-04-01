@@ -71,8 +71,8 @@ class HardModeWordlePlayer(BaseWordlePlayer):
         Solve a Wordle game by adhering to the constraints of hard mode.
         """
         self.reset()  # Reset the game state, including correct_positions and misplaced_letters
-        # if verbose:
-        print("\nTARGET: ", "UNKNOWN" if target is None else target)
+        if verbose:
+            print("\nTARGET: ", "UNKNOWN" if target is None else target)
 
         target, first_guess = self.lowercase(target), self.lowercase(first_guess)
         guess_words = [x.lower() for x in self.guess_list]
@@ -110,8 +110,8 @@ class HardModeWordlePlayer(BaseWordlePlayer):
             self.update_game_state(guess, response)
 
             if self.wordle.is_correct_response(response):
-                #if verbose:
-                print("Congrats! Total Guesses: {}".format(num_guess))
+                if verbose:
+                    print("Congrats! Total Guesses: {}".format(num_guess))
                 break
 
             # Adjust candidates based on the response
