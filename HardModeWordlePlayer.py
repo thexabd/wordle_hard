@@ -17,11 +17,18 @@ class HardModeWordlePlayer(BaseWordlePlayer):
         super().reset()
 
     def adjust_candidates(self, guess, response, candidates):
-        # Override the base method to enforce hard mode constraints.
-        new_candidates = []
-        for candidate in candidates:
-            if self.is_valid_candidate(guess, response, candidate):
-                new_candidates.append(candidate)
+        new_candidates = candidates[:]
+        for i, resp in enumerate(response):
+            if resp == '2':
+                # Keep only candidates with the correct letter in the correct position
+                new_candidates = [cand for cand in new_candidates if cand[i] == guess[i]]
+            elif resp == '1':
+                # Keep only candidates that have the letter but not in this position
+                new_candidates = [cand for cand in new_candidates if guess[i] in cand and cand[i] != guess[i]]
+            elif resp == '0':
+                # Remove candidates with the letter in any position unless it's also correctly placed elsewhere
+                if guess.count(guess[i]) == 1 or all(resp != '2' for resp in response):
+                    new_candidates = [cand for cand in new_candidates if guess[i] not in cand]
         return new_candidates
 
     def is_valid_candidate(self, guess, response, candidate):
@@ -47,6 +54,9 @@ class HardModeWordlePlayer(BaseWordlePlayer):
             #    return False
 
         return True
+
+    def get_response(self, guess, target):
+        return self.wordle.response_to_guess(guess, target)
 
     def give_guess(self, guess_words, candidates, history, fixed_guess=None, verbose=True):
         # Override to use hard mode constraints when picking a guess.
@@ -97,8 +107,9 @@ class HardModeWordlePlayer(BaseWordlePlayer):
                 continue
 
             if verbose:
-                print("# Guesses: {}, Picked Guess: {}, # Available Candidates: {}".format(
-                    num_guess, guess, len(candidates)))
+                print("# Guesses: {}, Picked Guess: {} (Score: {:.2f}), # Available Candidates: {}".format(
+                    num_guess, guess, self.compute_score(guess), len(candidates)))
+                #print(candidates)
 
             # Step 2: Get a response
             response = self.get_response(guess, target)
@@ -107,7 +118,10 @@ class HardModeWordlePlayer(BaseWordlePlayer):
 
             # Step 3: Update the game state based on the response
             trace.append((guess, response))
-            self.update_game_state(guess, response)
+            if not self.wordle.is_correct_response(response):
+                self.update_game_state(guess, response)
+                candidates = self.adjust_candidates(guess, response, candidates)
+                attempts.add(guess)
 
             if self.wordle.is_correct_response(response):
                 if verbose:
@@ -115,8 +129,8 @@ class HardModeWordlePlayer(BaseWordlePlayer):
                 break
 
             # Adjust candidates based on the response
-            candidates = self.adjust_candidates(guess, response, candidates)
-            attempts.add(guess)
+            # candidates = self.adjust_candidates(guess, response, candidates)
+            # attempts.add(guess)
 
             if len(candidates) == 0:
                 print("Failed to guess: no more available candidates!")

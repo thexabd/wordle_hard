@@ -113,7 +113,7 @@ class BaseWordlePlayer():
             word = word.lower()
         return word
 
-    def play(self, target=None, first_guess=None, verbose=False):
+    def play(self, target=None, first_guess=None, verbose=True):
         """
             Solve a Wordle game by:
 
@@ -149,7 +149,7 @@ class BaseWordlePlayer():
         trace = []
 
         num_guess = 0
-        while (len(candidates) >= 1):
+        while len(candidates) >= 1:
             num_guess += 1
 
             # Step 1: Guess
@@ -177,8 +177,6 @@ class BaseWordlePlayer():
             # Step 3: Check correctness and adjust
             trace.append((guess, response))
             if not self.wordle.is_correct_response(response):
-                if verbose and target:
-                    input("(... click Enter to proceed ...)\n")
                 candidates = self.adjust_candidates(guess, response, candidates)
                 attempts.add(guess)
             else:

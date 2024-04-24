@@ -85,7 +85,7 @@ if __name__ == "__main__":
         "--first_guess", default="salet",
         help="Specify a fixed word for the solver to use in the first guess, default 'audio'")
     parser.add_argument(
-        "--mode", default="hard",
+        "--mode", choices=["easy", "hard"], default="easy",
         help="Specify the difficulty, default 'hard'")
 
     args = parser.parse_args()
@@ -103,7 +103,7 @@ if __name__ == "__main__":
         player = MaxInformationGainWordlePlayer(wordle, guess_list=get_words("large"), precompute="large")
 
     elif args.solver == "heuristic" and args.mode == "hard":
-        print("\n[Loading the Max Information Gain Player (large word list)]\n")
+        print("\n[Loading the Heuristic Player ({} word list)]\n".format(words_size))
         player = HardHeuristicWordlePlayer(wordle, guess_list=get_words(words_size))
 
     elif args.solver == "mig" and args.mode == "hard":
