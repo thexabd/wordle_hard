@@ -20,14 +20,18 @@ class HardModeWordlePlayer(BaseWordlePlayer):
         new_candidates = candidates[:]
         for i, resp in enumerate(response):
             if resp == '2':
-                # Keep only candidates with the correct letter in the correct position
                 new_candidates = [cand for cand in new_candidates if cand[i] == guess[i]]
             elif resp == '1':
-                # Keep only candidates that have the letter but not in this position
                 new_candidates = [cand for cand in new_candidates if guess[i] in cand and cand[i] != guess[i]]
             elif resp == '0':
-                # Remove candidates with the letter in any position unless it's also correctly placed elsewhere
-                if guess.count(guess[i]) == 1 or all(resp != '2' for resp in response):
+                # Check if the letter associated with '0' is marked as '2' in any other position
+                indices_of_letter = [index for index, letter in enumerate(guess) if letter == guess[i]]
+                valid_for_removal = True
+                for index in indices_of_letter:
+                    if response[index] == '2' or response[index] == '1':
+                        valid_for_removal = False
+                        break
+                if valid_for_removal:
                     new_candidates = [cand for cand in new_candidates if guess[i] not in cand]
         return new_candidates
 
