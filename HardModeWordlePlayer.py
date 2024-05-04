@@ -58,7 +58,6 @@ class HardModeWordlePlayer(BaseWordlePlayer):
 
         new_candidates = [cand for cand in new_candidates if meets_required_counts(cand)]
 
-        print(new_candidates)
         return new_candidates
 
     def is_valid_candidate(self, guess, response, candidate):
