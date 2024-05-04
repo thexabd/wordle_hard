@@ -221,23 +221,3 @@ class HardModeWordlePlayer(BaseWordlePlayer):
                 return False
 
         return True
-
-    def print_initial_top_guesses(self, output_dir="output", output_name="top_scores"):
-        """
-            Save and return a sorted list of computed scores for all guess words
-
-            Return:
-                a list of (word, score) ordered by a decreasing score
-        """
-        self.reset()
-        top_guesses = sorted(
-            [(word, self.compute_score(word)) for word in self.guess_list],
-            key=lambda x: (-x[1], x[0]))
-
-        output_path = _get_output_path(output_dir, output_name, type(self).__name__) + ".txt"
-        with open(output_path, "w") as f:
-            for word, score in top_guesses:
-                f.write("\t".join([word, str(score)]) + "\n")
-            print("{} saved.".format(f.name))
-
-        return top_guesses
