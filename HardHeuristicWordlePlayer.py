@@ -61,7 +61,7 @@ class HardHeuristicWordlePlayer(HardModeWordlePlayer):
         """
         return sum([self.char_freq[c] for c in set(word)])
 
-    def give_guess(self, guess_words, candidates, history, fixed_guess=None, verbose=False):
+    def give_guess(self, guess_words, history, fixed_guess=None, verbose=False):
         """
             Provide a guess word that has the maximum score
             (unless specified by the fixed guess)

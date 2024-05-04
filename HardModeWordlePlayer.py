@@ -18,13 +18,27 @@ class HardModeWordlePlayer(BaseWordlePlayer):
 
     def adjust_candidates(self, guess, response, candidates):
         new_candidates = candidates[:]
+        char_required_count = {}
+        char_occurrences = {}
+
+        # Initialize character occurrences and required counts based on responses
+        for i, char in enumerate(guess):
+            char_occurrences[char] = char_occurrences.get(char, 0) + 1  # Track occurrences of each char
+
+        for i, char in enumerate(guess):
+            if response[i] in ['1', '2'] and char_occurrences[char] > 1:
+                if char in char_required_count:
+                    char_required_count[char] += 1
+                else:
+                    char_required_count[char] = 1
+
+        # Filter candidates based on response codes
         for i, resp in enumerate(response):
             if resp == '2':
                 new_candidates = [cand for cand in new_candidates if cand[i] == guess[i]]
             elif resp == '1':
                 new_candidates = [cand for cand in new_candidates if guess[i] in cand and cand[i] != guess[i]]
             elif resp == '0':
-                # Check if the letter associated with '0' is marked as '2' in any other position
                 indices_of_letter = [index for index, letter in enumerate(guess) if letter == guess[i]]
                 valid_for_removal = True
                 for index in indices_of_letter:
@@ -33,6 +47,18 @@ class HardModeWordlePlayer(BaseWordlePlayer):
                         break
                 if valid_for_removal:
                     new_candidates = [cand for cand in new_candidates if guess[i] not in cand]
+
+        # Ensure that the remaining candidates meet the required count for characters with '1' or '2' responses
+        def meets_required_counts(candidate):
+            candidate_char_count = {char: candidate.count(char) for char in char_required_count}
+            for char, required in char_required_count.items():
+                if candidate_char_count.get(char, 0) < required:
+                    return False
+            return True
+
+        new_candidates = [cand for cand in new_candidates if meets_required_counts(cand)]
+
+        print(new_candidates)
         return new_candidates
 
     def is_valid_candidate(self, guess, response, candidate):
@@ -101,18 +127,13 @@ class HardModeWordlePlayer(BaseWordlePlayer):
             # Step 1: Generate a guess considering the hard mode rules
             if num_guess == 1 and first_guess:
                 guess = first_guess
+                score = self.compute_score(guess)
             else:
-                guess = self.generate_hard_mode_guess(candidates, attempts)
-
-            # Ensure the guess complies with the rules
-            if not self.is_guess_valid(guess):
-                if verbose:
-                    print("Invalid guess based on previous hints, picking a new guess...")
-                continue
+                guess, score = self.generate_hard_mode_guess(candidates, attempts)
 
             if verbose:
                 print("# Guesses: {}, Picked Guess: {} (Score: {:.2f}), # Available Candidates: {}".format(
-                    num_guess, guess, self.compute_score(guess), len(candidates)))
+                    num_guess, guess, score, len(candidates)))
                 #print(candidates)
 
             # Step 2: Get a response
@@ -168,7 +189,14 @@ class HardModeWordlePlayer(BaseWordlePlayer):
         valid_candidates = [word for word in candidates if self.is_guess_valid(word) and word not in attempts]
         if not valid_candidates:
             raise ValueError("No valid candidates available that meet hard mode constraints.")
-        return random.choice(valid_candidates)
+        guess, score = self.give_guess(
+            guess_words=candidates,
+            history=attempts,
+            fixed_guess=None,
+            verbose=True
+        )
+        #return random.choice(valid_candidates)
+        return guess, score
 
     def is_guess_valid(self, guess):
         """
