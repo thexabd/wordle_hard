@@ -139,7 +139,7 @@ class HardMaxInformationGainWordlePlayer(HardModeWordlePlayer):
             score += -px * np.log(px)
         return score
 
-    def give_guess(self, guess_words, candidates, history, fixed_guess=None, verbose=False):
+    def give_guess(self, guess_words, history, fixed_guess=None, verbose=False):
         """
             Pick the guess word that has the maximum Shannon entropy
             (unless specified by the fixed guess)
