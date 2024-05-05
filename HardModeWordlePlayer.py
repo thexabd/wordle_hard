@@ -1,3 +1,5 @@
+## MY IMPLEMENTATION OF AN AGENT TO SOLVE WORDLE IN HARD MODE ##
+
 from BaseWordlePlayer import BaseWordlePlayer
 from utility import _get_output_path
 import numpy as np
@@ -6,25 +8,49 @@ import random
 
 
 class HardModeWordlePlayer(BaseWordlePlayer):
+    """
+        A base class for playing Worldle in Hard Mode
+    """
+
     def __init__(self, wordle, guess_list=None):
+        """
+            Initialize the Hard Mode Wordle Player with a reference to the Wordle game object and an optional guess list.
+        """
         super().__init__(wordle, guess_list)
-        self.correct_positions = [''] * self.wordle.k  # Create a list with the length of the word.
-        self.misplaced_letters = []
+        self.correct_positions = [''] * self.wordle.k  # Initialize list to store correct letters' positions.
+        self.misplaced_letters = [] # List to store letters that are correct but misplaced.
 
     def reset(self):
+        """
+            Reset the game state for a new game.
+        """
         self.correct_positions = [''] * self.wordle.k
         self.misplaced_letters = []
         super().reset()
 
     def adjust_candidates(self, guess, response, candidates):
-        new_candidates = candidates[:]
-        char_required_count = {}
-        char_occurrences = {}
+        """
+            Filter the list of candidate words based on the response to a guess. This method adjusts the list of candidates
+                by removing words that do not comply with the feedback given by the Wordle game, adhering to hard mode rules.
+    
+            Parameters:
+                guess (str): The word that was guessed.
+                response (list): List of responses for each character in the guess (0: incorrect, 1: misplaced, 2: correct).
+                candidates (list): Current list of possible candidate words.
+            
+            Returns:
+                list: The filtered list of candidate words that still could be the correct answer.
+        """
+        new_candidates = candidates[:] # Create a copy of the candidates list to modify it without altering the original list.
+        char_required_count = {} # Dictionary to hold the minimum required count of each character based on feedback.
+        char_occurrences = {} # Dictionary to count occurrences of each character in the guess.
 
         # Initialize character occurrences and required counts based on responses
         for i, char in enumerate(guess):
             char_occurrences[char] = char_occurrences.get(char, 0) + 1  # Track occurrences of each char
 
+        # Determine the required counts for characters based on the response.
+        # Needed when a character appears multiple times in the guess but is partially correct or misplaced.
         for i, char in enumerate(guess):
             if response[i] in ['1', '2'] and char_occurrences[char] > 1:
                 if char in char_required_count:
@@ -32,13 +58,15 @@ class HardModeWordlePlayer(BaseWordlePlayer):
                 else:
                     char_required_count[char] = 1
 
-        # Filter candidates based on response codes
+        # Filter the candidate words based on the response codes.
+        # Uses the response to determine if characters should be in certain positions or not in the word at all.
         for i, resp in enumerate(response):
-            if resp == '2':
+            if resp == '2': # Correct letter, correct position
                 new_candidates = [cand for cand in new_candidates if cand[i] == guess[i]]
-            elif resp == '1':
+            elif resp == '1': # Correct letter, incorrect position
                 new_candidates = [cand for cand in new_candidates if guess[i] in cand and cand[i] != guess[i]]
-            elif resp == '0':
+            elif resp == '0': # Letter not in word
+                # Determine if the character should be entirely removed from candidates.
                 indices_of_letter = [index for index, letter in enumerate(guess) if letter == guess[i]]
                 valid_for_removal = True
                 for index in indices_of_letter:
@@ -58,36 +86,22 @@ class HardModeWordlePlayer(BaseWordlePlayer):
 
         new_candidates = [cand for cand in new_candidates if meets_required_counts(cand)]
 
+        # Remove the original guess from the new candidates list
+        if guess in new_candidates:
+            new_candidates.remove(guess)
+
         return new_candidates
 
-    def is_valid_candidate(self, guess, response, candidate):
-        """
-        Check if a candidate word is valid according to the rules of hard mode.
-        """
-        for i, char in enumerate(candidate):
-            if self.correct_positions[i] and char != self.correct_positions[i]:
-                return False  # Incorrect letter in a position already known
-
-            '''
-            # Check that misplaced letters are not in the position they were misplaced in
-            if char in self.misplaced_letters and guess[i] == char:
-                return False  # Misplaced letter in the same wrong position
-            '''
-
-        # Ensure all misplaced letters are included somewhere in the candidate
-        for char in self.misplaced_letters:
-            if char not in candidate:
-                return False
-            # Check if the letter is not placed back in the incorrect position
-            # if any(candidate[i] == char and guess[i] == char for i in range(len(candidate))):
-            #    return False
-
-        return True
-
     def get_response(self, guess, target):
+        """
+            Get the response for a guess based on the target word.
+        """
         return self.wordle.response_to_guess(guess, target)
 
     def give_guess(self, guess_words, candidates, history, fixed_guess=None, verbose=True):
+        """
+            Choose the next guess either by the player's input or automatically based on the hard mode constraints.
+        """
         # Override to use hard mode constraints when picking a guess.
         if fixed_guess is not None:
             return fixed_guess, self.compute_score(fixed_guess)
@@ -107,7 +121,7 @@ class HardModeWordlePlayer(BaseWordlePlayer):
 
     def play(self, target=None, first_guess=None, verbose=True):
         """
-        Solve a Wordle game by adhering to the constraints of hard mode.
+            Solve a Wordle game by adhering to the constraints of hard mode.
         """
         self.reset()  # Reset the game state, including correct_positions and misplaced_letters
         if verbose:
@@ -170,7 +184,7 @@ class HardModeWordlePlayer(BaseWordlePlayer):
 
     def update_game_state(self, guess, response):
         """
-        Update the game state including the correct_positions and misplaced_letters based on the response.
+            Update the game state including the correct_positions and misplaced_letters based on the response.
         """
         for i, (g, r) in enumerate(zip(guess, response)):
             if r == '2':  # Correct letter in the correct position
@@ -181,8 +195,8 @@ class HardModeWordlePlayer(BaseWordlePlayer):
 
     def generate_hard_mode_guess(self, candidates, attempts):
         """
-        Generate a valid guess for hard mode by choosing a word from candidates that respects
-        the already known correct positions and misplaced letters.
+            Generate a valid guess for hard mode by choosing a word from candidates that respects
+            the already known correct positions and misplaced letters.
         """
 
         valid_candidates = [word for word in candidates if self.is_guess_valid(word) and word not in attempts]
@@ -199,7 +213,7 @@ class HardModeWordlePlayer(BaseWordlePlayer):
 
     def is_guess_valid(self, guess):
         """
-        Check if a guess is valid according to the correct positions and misplaced letters for hard mode.
+            Check if a guess is valid according to the correct positions and misplaced letters for hard mode.
         """
         # Check correct positions
         for i, char in enumerate(guess):
